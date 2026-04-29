@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evidence Reports | Agriculture Forensics</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>📜 Forensic <span>Evidence Archive</span></h1>
+            <p class="subtitle">Complete history of agricultural data integrity reports</p>
+            <div style="margin-top: 20px;">
+                <button class="secondary-btn" onclick="window.location.href='/'"
+                    style="padding: 10px 24px; border-radius: 50px;">🏠 Back to Home</button>
+            </div>
+        </header>
+
+        <main>
+            <section class="results">
+                <div class="card table-card">
+                    <div class="table-header">
+                        <h3>All Collected Evidence</h3>
+                        <button class="secondary-btn" onclick="window.location.href='/api/download_report'"
+                            style="margin-top: 0; padding: 6px 12px; font-size: 14px;">📥 Export Full CSV</button>
+                    </div>
+                    <div class="table-container">
+                        <table id="evidenceTable">
+                            <thead>
+                                <tr>
+                                    <th>File Name</th>
+                                    <th>Path</th>
+                                    <th>Created</th>
+                                    <th>Modified</th>
+                                    <th>SHA256 Hash</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody">
+                                <tr>
+                                    <td colspan="6" style="text-align: center; color: #888;">Loading archived reports...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; Cloud Forensics Automation | Secure Agriculture Systems</p>
+        </footer>
+    </div>
+
+    <script>
+        async function fetchReportData() {
+            const response = await fetch('/api/data');
+            const data = await response.json();
+            const tbody = document.getElementById('tableBody');
+
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #888;">No archived evidence found.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = '';
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="file-name">${row['File Name']}</td>
+                    <td class="file-path">${row['File Path']}</td>
+                    <td>${row['Created Time']}</td>
+                    <td>${row['Last Modified Time']}</td>
+                    <td class="hash-cell"><code>${row['SHA256 Hash'].substring(0, 16)}...</code></td>
+                    <td class="actions-cell">
+                        <button class="secondary-btn action-btn" onclick="window.location.href='/api/download_file/${row['File Name']}'" title="Download">📥</button>
+                        <button class="secondary-btn action-btn delete-btn" onclick="deleteFile('${row['File Name']}', '${row['File Path'].replace(/\\/g, '\\\\')}')" title="Remove">🗑️</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function deleteFile(filename, filepath) {
+            if (!confirm(`Are you sure you want to remove ${filename} from history and disk?`)) return;
+
+            try {
+                const response = await fetch('/api/delete_file', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename, filepath })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    await fetchReportData();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (err) {
+                alert('Failed to connect to server');
+            }
+        }
+
+        window.onload = fetchReportData;
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agriculture Forensics Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌱 Agriculture Forensics <span>Automation</span></h1>
+            <p class="subtitle">Cloud-based file evidence collection & integrity verification</p>
+            <div style="margin-top: 20px;">
+                <button class="secondary-btn" onclick="window.location.href='/reports'" style="padding: 10px 24px; border-radius: 50px;">📜 View Evidence Archive</button>
+            </div>
+        </header>
+
+        <main>
+            <section class="controls single-focus">
+                <div class="card centered-card">
+                    <h3>📁 Agriculture Evidence Upload</h3>
+                    <p>Select and upload an agricultural data file from your system to generate an instant forensic metadata report.</p>
+                    <div class="upload-area">
+                        <input type="file" id="fileInput" hidden>
+                        <button class="secondary-btn" onclick="document.getElementById('fileInput').click()">🔍 Browse Files</button>
+                        <button id="uploadBtn" onclick="uploadFile()">🚀 Upload & Analyze</button>
+                    </div>
+                    <p id="uploadStatus" class="status"></p>
+                </div>
+            </section>
+
+
+
+        <footer>
+            <p>&copy; Cloud Forensics Automation | Secure Agriculture Systems</p>
+        </footer>
+    </div>
+
+    <script>
+        async function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const btn = document.getElementById('uploadBtn');
+            const msg = document.getElementById('uploadStatus');
+
+            if (fileInput.files.length === 0) {
+                msg.innerText = '⚠️ Please select an agricultural file first.';
+                msg.className = 'status error';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            btn.disabled = true;
+            btn.innerText = 'Analyzing...';
+            msg.innerText = 'Extracting metadata and calculating hash...';
+            msg.className = 'status loading';
+
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    msg.innerHTML = `✅ File analyzed successfully! <br><br> <button class="secondary-btn" onclick="window.location.href='/reports'" style="margin-top:10px;">📜 View Report in Archive</button>`;
+                    msg.className = 'status success';
+                    fileInput.value = ''; // clear input
+                } else {
+                    msg.innerText = '❌ ' + result.message;
+                    msg.className = 'status error';
+                }
+            } catch (err) {
+                msg.innerText = '❌ Failed to connect to backend.';
+                msg.className = 'status error';
+            } finally {
+                btn.disabled = false;
+                btn.innerText = '🚀 Upload & Analyze';
+            }
+        }
+
+        window.onload = () => { 
+            console.log('Ready for forensics analysis'); 
+        };
+    </script>
+</body>
+</html>
